@@ -113,7 +113,7 @@ static int golombset_encode(unsigned fixed_bits, const unsigned *keys, size_t nu
     for (i = 0; i != num_keys; ++i) {
         if (golombset_encode_value(&ctx, keys[i] - next_min) != 0)
             return -1;
-        next_min = keys[i] + 1;
+        next_min = keys[i];
     }
 
     if (ctx.dst_shift == 8)
@@ -139,7 +139,7 @@ static int golombset_decode(unsigned fixed_bits, const void *buf, size_t bufsize
         }
         value += next_min;
         keys[index++] = value;
-        next_min = value + 1;
+        next_min = value;
     }
     *num_keys = index;
     return 0;
