@@ -1,7 +1,7 @@
 golombset
 ===
 
-Golombset is a pure-C, header-file-only implementation of Golomb coded set, which is an compressed form of [Bloom filter](https://en.wikipedia.org/Bloom_filter).
+Golombset is a pure-C, header-file-only implementation of Golomb compressed set, which is an compressed form of [Bloom filter](https://en.wikipedia.org/Bloom_filter).
 
 It is compresses every zero-range of Bloom filter (e.g. `0000...1`) using [Golomb coding](https://en.wikipedia.org/wiki/Golomb_coding).
 Please refer to [Golomb-coded sets: smaller than Bloom filters](http://giovanni.bajo.it/post/47119962313/golomb-coded-sets-smaller-than-bloom-filters) for more information about the algorithm.
