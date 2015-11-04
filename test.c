@@ -31,7 +31,7 @@ int main(int argc, char **argv)
     unsigned char buf[1024];
     size_t i, bufsize = sizeof(buf);
 
-    if (golombset_encode(6, keys, num_keys, buf, &bufsize) != 0) {
+    if (golombset_encode(keys, num_keys, buf, &bufsize) != 0) {
         fprintf(stderr, "golombset_encode failed\n");
         return 111;
     }
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     
     unsigned decoded_keys[num_keys];
     size_t num_decoded_keys = num_keys;
-    if (golombset_decode(6, buf, bufsize, decoded_keys, &num_decoded_keys) != 0) {
+    if (golombset_decode(buf, bufsize, decoded_keys, &num_decoded_keys) != 0) {
         fprintf(stderr, "golombset_decode failed\n");
         return 111;
     }

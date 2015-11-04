@@ -9,7 +9,7 @@ Please refer to [Golomb-coded sets: smaller than Bloom filters](http://giovanni.
 API
 ---
 
-__`int golombset_encode(unsigned fixed_bits, const unsigned *keys, size_t num_keys, void *buf, size_t *bufsize);`__
+__`int golombset_encode(const unsigned *keys, size_t num_keys, void *buf, size_t *bufsize);`__
 
 The function encodes an pre-sorted array of keys into given buffer.
 
@@ -18,7 +18,7 @@ The function returns zero if successful, or -1 if otherwise (e.g. the size of th
 Upon calling the function the value of the pointer must specify the size of the buffer being supplied.
 When the function returns successfully, the value is updated the length of the bytes actually used to store the encoded data.
 
-__`int golombset_decode(unsigned fixed_bits, const void *buf, size_t bufsize, unsigned *keys, size_t *num_keys);`__
+__`int golombset_decode(const void *buf, size_t bufsize, unsigned *keys, size_t *num_keys);`__
 
 The function decodes the compressed data into an array of keys.
 
