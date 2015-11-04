@@ -113,9 +113,9 @@ static unsigned golombset_calc_fixed_bits(unsigned max_key, size_t num_keys)
     unsigned delta, bits;
 
     delta = max_key / num_keys;
-    if (delta <= 1)
+    if (delta < 1)
         return 0;
-    bits = sizeof(unsigned) * 8 - __builtin_clz(delta - 1);
+    bits = sizeof(unsigned) * 8 - __builtin_clz(delta) - 1;
     if (bits > GOLOMBSET_MAX_FIXED_BITS)
         bits = GOLOMBSET_MAX_FIXED_BITS;
     return bits;
