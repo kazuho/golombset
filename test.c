@@ -29,13 +29,16 @@ int main(int argc, char **argv)
                        997, 1005, 1017, 1134, 1207, 1231, 1327, 1378, 1393, 1418, 1525, 1627, 1630};
     const size_t num_keys = sizeof(keys) / sizeof(keys[0]);
     unsigned char buf[1024];
-    size_t bufsize = sizeof(buf);
+    size_t i, bufsize = sizeof(buf);
 
     if (golombset_encode(6, keys, num_keys, buf, &bufsize) != 0) {
         fprintf(stderr, "golombset_encode failed\n");
         return 111;
     }
-    printf("encoded %zu entries into %zu bytes\n", num_keys, bufsize);
+    printf("encoded %zu entries into %zu bytes: ", num_keys, bufsize);
+    for (i = 0; i != bufsize; ++i)
+        printf("%02x", buf[i]);
+    printf("\n");
     
     unsigned decoded_keys[num_keys];
     size_t num_decoded_keys = num_keys;
