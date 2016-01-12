@@ -6,21 +6,45 @@ Golombset is a pure-C, header-file-only implementation of Golomb compressed set,
 It compresses every zero-range of Bloom filter (e.g. `0000...1`) using [Golomb coding](https://en.wikipedia.org/wiki/Golomb_coding).
 Please refer to [Golomb-coded sets: smaller than Bloom filters](http://giovanni.bajo.it/post/47119962313/golomb-coded-sets-smaller-than-bloom-filters) for more information about the algorithm.
 
-API
+Encode
 ---
 
-__`int golombset_encode(const unsigned *keys, size_t num_keys, void *buf, size_t *bufsize);`__
+```
+// buffer to store the encoded data
+char buf[1024];
 
-The function encodes an pre-sorted array of keys into given buffer.
+// setup encoder context; dst, dst_max, fixed_bits_length MUST be set
+golombset_encoder_t ctx;
+memset(&ctx, 0, sizeof(ctx));
+ctx.dst = buf;
+ctx.dst_max = buf + siezeof(buf);
+ctx.fixed_bits_length = 5; // number of bits used to store `fixed_bits`
 
-The function returns zero if successful, or -1 if otherwise (e.g. the size of the buffer is not sufficient).
-`bufsize` is an input-output parameter.
-Upon calling the function the value of the pointer must specify the size of the buffer being supplied.
-When the function returns successfully, the value is updated the length of the bytes actually used to store the encoded data.
+// encode values (values must be pre-sorted)
+int ret = golombset_encode(&ctx, values, num_values, 0);
+```
 
-__`int golombset_decode(const void *buf, size_t bufsize, unsigned *keys, size_t *num_keys);`__
+The encode function returns zero on success.
+The function returns a non-zero value if size of the buffer is too small; applications must repeat the entire process with a larger buffer to generate the encoded data.
 
-The function decodes the compressed data into an array of keys.
+Decode
+---
 
-The function returns zero if successful, or -1 if the size of the `keys` buffer is too small (specified by `*num_keys` when the function is being called).
-Upon successful return, the number of keys decoded will be stored in `*num_keys`.
+```
+// buffer to srote the decoded data
+unsigned values[1024];
+size_t num_values = sizeof(values) / sizeof(values[0]);
+
+// setup decoder context; src, src_max, fixd_bits_length MUST be set
+golombset_decoder_t ctx;
+memset(&ctx, 0, sizeof(ctx));
+ctx.src = encoded_bytes;
+ctx.src_max = length_of_encoded_bytes;
+ctx.fixed_bits_length = 5;
+
+// decode the values
+int ret = golombset_decode(&ctx, &values, &num_values, 0);
+```
+
+The decode function returns zero on success.
+The function returns a non-zero value if size of the buffer is too small; applications must repeat the entire process with a larger buffer to generate the decoded data.
