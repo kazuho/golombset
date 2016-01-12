@@ -21,8 +21,7 @@ ctx.dst_max = buf + sizeof(buf);
 ctx.fixed_bits_length = 5; // number of bits used to store `fixed_bits`
 
 // encode values (values must be pre-sorted)
-int ret = golombset_encode(&ctx, values, num_values,
-                           GOLOMBSET_ENCODE_FIXED_BITS | GOLOMBSET_ENCODE_CALC_FIXED_BITS);
+int ret = golombset_encode(&ctx, values, num_values, GOLOMBSET_ENCODE_CALC_FIXED_BITS);
 
 // encoded values will be stored in `buf`, the length is `ctx.dst - buf` bytes
 ```
@@ -46,7 +45,7 @@ ctx.src_max = length_of_encoded_bytes;
 ctx.fixed_bits_length = 5;
 
 // decode the values
-int ret = golombset_decode(&ctx, &values, &num_values, GOLOMBSET_DECODE_FIXED_BITS);
+int ret = golombset_decode(&ctx, &values, &num_values, 0);
 ```
 
 The decode function returns zero on success.

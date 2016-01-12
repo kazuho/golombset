@@ -46,7 +46,7 @@ static int encode(void)
     ctx.dst = buf;
     ctx.dst_max = buf + sizeof(buf);
     ctx.fixed_bits_length = FIXED_BITS_LENGTH;
-    if (golombset_encode(&ctx, keys, num_keys, GOLOMBSET_ENCODE_FIXED_BITS | GOLOMBSET_ENCODE_CALC_FIXED_BITS) != 0) {
+    if (golombset_encode(&ctx, keys, num_keys, GOLOMBSET_ENCODE_CALC_FIXED_BITS) != 0) {
         fprintf(stderr, "failed to encode the values\n");
         return 111;
     }
@@ -72,7 +72,7 @@ static int decode(void)
     ctx.src = buf;
     ctx.src_max = buf + buf_size;
     ctx.fixed_bits_length = FIXED_BITS_LENGTH;
-    if (golombset_decode(&ctx, keys, &num_keys, GOLOMBSET_DECODE_FIXED_BITS) != 0) {
+    if (golombset_decode(&ctx, keys, &num_keys, 0) != 0) {
         fprintf(stderr, "failed to decode the values\n");
         return 111;
     }

@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     enc.dst = buf;
     enc.dst_max = buf + sizeof(buf);
     enc.fixed_bits_length = FIXED_BITS_LENGTH;
-    if (golombset_encode(&enc, keys, num_keys, GOLOMBSET_ENCODE_FIXED_BITS | GOLOMBSET_ENCODE_CALC_FIXED_BITS) != 0) {
+    if (golombset_encode(&enc, keys, num_keys, GOLOMBSET_ENCODE_CALC_FIXED_BITS) != 0) {
         fprintf(stderr, "golombset_encode failed\n");
         return 111;
     }
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
     dec.src = buf;
     dec.src_max = enc.dst;
     dec.fixed_bits_length = FIXED_BITS_LENGTH;
-    if (golombset_decode(&dec, decoded_keys, &num_decoded_keys, GOLOMBSET_DECODE_FIXED_BITS) != 0) {
+    if (golombset_decode(&dec, decoded_keys, &num_decoded_keys, 0) != 0) {
         fprintf(stderr, "golombset_decode failed\n");
         return 111;
     }
