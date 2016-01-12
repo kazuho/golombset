@@ -9,7 +9,7 @@ Please refer to [Golomb-coded sets: smaller than Bloom filters](http://giovanni.
 Encode
 ---
 
-```
+```c
 // buffer to store the encoded data
 char buf[1024];
 
@@ -30,7 +30,7 @@ The function returns a non-zero value if size of the buffer is too small; applic
 Decode
 ---
 
-```
+```c
 // buffer to srote the decoded data
 unsigned values[1024];
 size_t num_values = sizeof(values) / sizeof(values[0]);
