@@ -27,8 +27,8 @@
 
 int main(int argc, char **argv)
 {
-    const unsigned keys[] = {151, 192,  208,  269,  461,  512,  526,  591,  662,  806,  831,  866,  890,
-                       997, 1005, 1017, 1134, 1207, 1231, 1327, 1378, 1393, 1418, 1525, 1627, 1630};
+    const uint64_t keys[] = {151, 192,  208,  269,  461,  512,  526,  591,  662,  806,  831,  866,  890,
+                             997, 1005, 1017, 1134, 1207, 1231, 1327, 1378, 1393, 1418, 1525, 1627, 1630};
     const size_t num_keys = sizeof(keys) / sizeof(keys[0]);
     unsigned char buf[1024];
     size_t i;
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
         printf("%02x", buf[i]);
     printf("\n");
     
-    unsigned decoded_keys[num_keys];
+    uint64_t decoded_keys[num_keys];
     size_t num_decoded_keys = num_keys;
     golombset_decoder_t dec = {};
     dec.src = buf;

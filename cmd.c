@@ -27,13 +27,13 @@
 
 static int encode(void)
 {
-    unsigned keys[4096];
+    uint64_t keys[4096];
     size_t num_keys = 0;
     unsigned char buf[65536];
 
     while (1) {
-        unsigned v;
-        if (fscanf(stdin, "%u\n", &v) != 1)
+        uint64_t v;
+        if (fscanf(stdin, "%" SCNu64 "\n", &v) != 1)
             break;
         keys[num_keys++] = v;
     }
@@ -59,7 +59,7 @@ static int decode(void)
 {
     unsigned char buf[65536];
     size_t buf_size;
-    unsigned keys[4096];
+    uint64_t keys[4096];
     size_t i, num_keys = sizeof(keys) / sizeof(keys[0]);
 
     buf_size = fread(buf, 1, sizeof(buf), stdin);
@@ -78,7 +78,7 @@ static int decode(void)
     }
 
     for (i = 0; i != num_keys; ++i)
-        printf("%u\n", keys[i]);
+        printf("%" PRIu64 "\n", keys[i]);
     return 0;
 }
 

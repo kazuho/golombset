@@ -22,6 +22,8 @@
 #ifndef GOLOMBSET_H
 #define GOLOMBSET_H
 
+#include <inttypes.h>
+
 #define GOLOMBSET_ENCODE_CALC_FIXED_BITS 1
 
 typedef struct st_golombset_encoder_t {
@@ -65,7 +67,7 @@ static inline int golombset_decode_bit(golombset_decoder_t *ctx)
     return (*ctx->src >> (8 - ctx->src_shift)) & 1;
 }
 
-static inline int golombset_encode_value(golombset_encoder_t *ctx, unsigned value)
+static inline int golombset_encode_value(golombset_encoder_t *ctx, uint64_t value)
 {
     /* emit the unary bits */
     unsigned unary_bits = value >> ctx->fixed_bits;
@@ -84,7 +86,7 @@ static inline int golombset_encode_value(golombset_encoder_t *ctx, unsigned valu
     return 0;
 }
 
-static inline int golombset_decode_value(golombset_decoder_t *ctx, unsigned *value)
+static inline int golombset_decode_value(golombset_decoder_t *ctx, uint64_t *value)
 {
     int bit;
     *value = 0;
@@ -108,25 +110,26 @@ static inline int golombset_decode_value(golombset_decoder_t *ctx, unsigned *val
     return 0;
 }
 
-static inline unsigned golombset_calc_fixed_bits(golombset_encoder_t *ctx, unsigned max_key, size_t num_keys)
+static inline unsigned golombset_calc_fixed_bits(golombset_encoder_t *ctx, uint64_t max_key, size_t num_keys)
 {
-    unsigned delta, fixed_bits;
+    uint64_t delta;
+    unsigned fixed_bits;
 
     if (num_keys == 0)
         return 0;
     delta = max_key / num_keys;
     if (delta < 1)
         return 0;
-    fixed_bits = sizeof(unsigned) * 8 - __builtin_clz(delta) - 1;
+    fixed_bits = sizeof(unsigned long long) * 8 - __builtin_clzll((unsigned long long)delta) - 1;
     if (fixed_bits >= 1 << ctx->fixed_bits_length)
         fixed_bits = (1 << ctx->fixed_bits_length) - 1;
     return fixed_bits;
 }
 
-static inline int golombset_encode(golombset_encoder_t *ctx, const unsigned *keys, size_t num_keys, int flags)
+static inline int golombset_encode(golombset_encoder_t *ctx, const uint64_t *keys, size_t num_keys, int flags)
 {
     size_t i;
-    unsigned next_min = 0;
+    uint64_t next_min = 0;
 
     if ((flags & GOLOMBSET_ENCODE_CALC_FIXED_BITS) != 0)
         ctx->fixed_bits = golombset_calc_fixed_bits(ctx, keys[num_keys - 1], num_keys);
@@ -146,10 +149,10 @@ static inline int golombset_encode(golombset_encoder_t *ctx, const unsigned *key
     return 0;
 }
 
-static inline int golombset_decode(golombset_decoder_t *ctx, unsigned *keys, size_t *num_keys, int flags)
+static inline int golombset_decode(golombset_decoder_t *ctx, uint64_t *keys, size_t *num_keys, int flags)
 {
     size_t i, index = 0;
-    unsigned next_min = 0;
+    uint64_t next_min = 0;
 
     for (i = 0; i != ctx->fixed_bits_length; ++i) {
         int bit = golombset_decode_bit(ctx);
@@ -158,7 +161,7 @@ static inline int golombset_decode(golombset_decoder_t *ctx, unsigned *keys, siz
         ctx->fixed_bits = (ctx->fixed_bits << 1) | bit;
     }
     while (1) {
-        unsigned value;
+        uint64_t value;
         if (golombset_decode_value(ctx, &value) != 0)
             break;
         if (index == *num_keys) {
