@@ -17,7 +17,7 @@ char buf[1024];
 golombset_encoder_t ctx;
 memset(&ctx, 0, sizeof(ctx));
 ctx.dst = buf;
-ctx.dst_max = buf + siezeof(buf);
+ctx.dst_max = buf + sizeof(buf);
 ctx.fixed_bits_length = 5; // number of bits used to store `fixed_bits`
 
 // encode values (values must be pre-sorted)
