@@ -47,12 +47,21 @@ static inline int golombset_encode_bit(golombset_encoder_t *ctx, int bit)
     if (ctx->dst_shift == 8) {
         if (++ctx->dst == ctx->dst_max)
             return -1;
-        *ctx->dst = 0xff;
         ctx->dst_shift = 0;
     }
+    if (ctx->dst_shift == 0)
+        *ctx->dst = 0xff;
     if (!bit)
         *ctx->dst &= ~(0x80 >> ctx->dst_shift);
     ++ctx->dst_shift;
+    return 0;
+}
+
+static inline int golombset_encode_bits(golombset_encoder_t *ctx, uint64_t value, unsigned nbits)
+{
+    while (nbits != 0)
+        if (golombset_encode_bit(ctx, (value >> --nbits) & 1) != 0)
+            return -1;
     return 0;
 }
 
@@ -67,6 +76,18 @@ static inline int golombset_decode_bit(golombset_decoder_t *ctx)
     return (*ctx->src >> (8 - ctx->src_shift)) & 1;
 }
 
+static inline int golombset_decode_bits(golombset_decoder_t *ctx, uint64_t *value, unsigned bits)
+{
+    *value = 0;
+    for (; bits != 0; --bits) {
+        int bit = golombset_decode_bit(ctx);
+        if (bit == -1)
+            return -1;
+        *value = (*value << 1) | bit;
+    }
+    return 0;
+}
+
 static inline int golombset_encode_value(golombset_encoder_t *ctx, uint64_t value)
 {
     /* emit the unary bits */
@@ -77,19 +98,13 @@ static inline int golombset_encode_value(golombset_encoder_t *ctx, uint64_t valu
     if (golombset_encode_bit(ctx, 0) != 0)
         return -1;
     /* emit the rest */
-    unsigned shift = ctx->fixed_bits;
-    while (shift != 0) {
-        if (golombset_encode_bit(ctx, (value >> --shift) & 1) != 0)
-            return -1;
-    }
-
-    return 0;
+    return golombset_encode_bits(ctx, value, ctx->fixed_bits);
 }
 
 static inline int golombset_decode_value(golombset_decoder_t *ctx, uint64_t *value)
 {
     int bit;
-    *value = 0;
+    uint64_t unary = 0, fixed;
 
     /* decode the unary bits */
     while (1) {
@@ -97,16 +112,13 @@ static inline int golombset_decode_value(golombset_decoder_t *ctx, uint64_t *val
             return -1;
         if (bit == 0)
             break;
-        *value += 1 << ctx->fixed_bits;
+        ++unary;
     }
     /* decode the rest */
-    unsigned shift = ctx->fixed_bits;
-    while (shift != 0) {
-        if ((bit = golombset_decode_bit(ctx)) == -1)
-            return -1;
-        *value |= bit << --shift;
-    }
+    if (golombset_decode_bits(ctx, &fixed, ctx->fixed_bits) != 0)
+        return -1;
 
+    *value = (unary << ctx->fixed_bits) | fixed;
     return 0;
 }
 
@@ -134,11 +146,8 @@ static inline int golombset_encode(golombset_encoder_t *ctx, const uint64_t *key
     if ((flags & GOLOMBSET_ENCODE_CALC_FIXED_BITS) != 0)
         ctx->fixed_bits = golombset_calc_fixed_bits(ctx, keys[num_keys - 1], num_keys);
 
-    *(unsigned char *)ctx->dst = 0xff;
-    for (i = 0; i != ctx->fixed_bits_length; ++i) {
-        if (golombset_encode_bit(ctx, (ctx->fixed_bits >> (ctx->fixed_bits_length - 1 - i)) & 1) != 0)
-            return -1;
-    }
+    if (golombset_encode_bits(ctx, ctx->fixed_bits, ctx->fixed_bits_length) != 0)
+        return -1;
     for (i = 0; i != num_keys; ++i) {
         if (golombset_encode_value(ctx, keys[i] - next_min) != 0)
             return -1;
@@ -151,15 +160,13 @@ static inline int golombset_encode(golombset_encoder_t *ctx, const uint64_t *key
 
 static inline int golombset_decode(golombset_decoder_t *ctx, uint64_t *keys, size_t *num_keys, int flags)
 {
-    size_t i, index = 0;
-    uint64_t next_min = 0;
+    size_t index = 0;
+    uint64_t next_min = 0, tmp;
 
-    for (i = 0; i != ctx->fixed_bits_length; ++i) {
-        int bit = golombset_decode_bit(ctx);
-        if (bit == -1)
-            return -1;
-        ctx->fixed_bits = (ctx->fixed_bits << 1) | bit;
-    }
+    if (golombset_decode_bits(ctx, &tmp, ctx->fixed_bits_length) != 0)
+        return -1;
+    ctx->fixed_bits = tmp;
+
     while (1) {
         uint64_t value;
         if (golombset_decode_value(ctx, &value) != 0)
