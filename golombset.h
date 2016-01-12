@@ -40,7 +40,7 @@ typedef struct st_golombset_decoder_t {
     unsigned fixed_bits;
 } golombset_decoder_t;
 
-static int golombset_encode_bit(golombset_encoder_t *ctx, int bit)
+static inline int golombset_encode_bit(golombset_encoder_t *ctx, int bit)
 {
     if (ctx->dst_shift == 8) {
         if (++ctx->dst == ctx->dst_max)
@@ -54,7 +54,7 @@ static int golombset_encode_bit(golombset_encoder_t *ctx, int bit)
     return 0;
 }
 
-static int golombset_decode_bit(golombset_decoder_t *ctx)
+static inline int golombset_decode_bit(golombset_decoder_t *ctx)
 {
     if (ctx->src_shift == 8) {
         if (++ctx->src == ctx->src_max)
@@ -65,7 +65,7 @@ static int golombset_decode_bit(golombset_decoder_t *ctx)
     return (*ctx->src >> (8 - ctx->src_shift)) & 1;
 }
 
-static int golombset_encode_value(golombset_encoder_t *ctx, unsigned value)
+static inline int golombset_encode_value(golombset_encoder_t *ctx, unsigned value)
 {
     /* emit the unary bits */
     unsigned unary_bits = value >> ctx->fixed_bits;
@@ -84,7 +84,7 @@ static int golombset_encode_value(golombset_encoder_t *ctx, unsigned value)
     return 0;
 }
 
-static int golombset_decode_value(golombset_decoder_t *ctx, unsigned *value)
+static inline int golombset_decode_value(golombset_decoder_t *ctx, unsigned *value)
 {
     int bit;
     *value = 0;
@@ -108,7 +108,7 @@ static int golombset_decode_value(golombset_decoder_t *ctx, unsigned *value)
     return 0;
 }
 
-static unsigned golombset_calc_fixed_bits(golombset_encoder_t *ctx, unsigned max_key, size_t num_keys)
+static inline unsigned golombset_calc_fixed_bits(golombset_encoder_t *ctx, unsigned max_key, size_t num_keys)
 {
     unsigned delta, fixed_bits;
 
@@ -123,7 +123,7 @@ static unsigned golombset_calc_fixed_bits(golombset_encoder_t *ctx, unsigned max
     return fixed_bits;
 }
 
-static int golombset_encode(golombset_encoder_t *ctx, const unsigned *keys, size_t num_keys, int flags)
+static inline int golombset_encode(golombset_encoder_t *ctx, const unsigned *keys, size_t num_keys, int flags)
 {
     size_t i;
     unsigned next_min = 0;
@@ -146,7 +146,7 @@ static int golombset_encode(golombset_encoder_t *ctx, const unsigned *keys, size
     return 0;
 }
 
-static int golombset_decode(golombset_decoder_t *ctx, unsigned *keys, size_t *num_keys, int flags)
+static inline int golombset_decode(golombset_decoder_t *ctx, unsigned *keys, size_t *num_keys, int flags)
 {
     size_t i, index = 0;
     unsigned next_min = 0;
