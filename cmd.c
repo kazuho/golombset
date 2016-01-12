@@ -23,12 +23,13 @@
 #include <string.h>
 #include "golombset.h"
 
+#define FIXED_BITS_LENGTH 5
+
 static int encode(void)
 {
     unsigned keys[4096];
     size_t num_keys = 0;
     unsigned char buf[65536];
-    size_t buf_size = sizeof(buf);
 
     while (1) {
         unsigned v;
@@ -41,12 +42,16 @@ static int encode(void)
         return 111;
     }
 
-    if (golombset_encode(keys, num_keys, buf, &buf_size) != 0) {
+    golombset_encoder_t ctx = {};
+    ctx.dst = buf;
+    ctx.dst_max = buf + sizeof(buf);
+    ctx.fixed_bits_length = FIXED_BITS_LENGTH;
+    if (golombset_encode(&ctx, keys, num_keys, GOLOMBSET_ENCODE_CALC_FIXED_BITS) != 0) {
         fprintf(stderr, "failed to encode the values\n");
         return 111;
     }
 
-    fwrite(buf, 1, buf_size, stdout);
+    fwrite(buf, 1, ctx.dst - buf, stdout);
     return 0;
 }
 
@@ -63,7 +68,11 @@ static int decode(void)
         return 111;
     }
 
-    if (golombset_decode(buf, buf_size, keys, &num_keys) != 0) {
+    golombset_decoder_t ctx = {};
+    ctx.src = buf;
+    ctx.src_max = buf + buf_size;
+    ctx.fixed_bits_length = FIXED_BITS_LENGTH;
+    if (golombset_decode(&ctx, keys, &num_keys, 0) != 0) {
         fprintf(stderr, "failed to decode the values\n");
         return 111;
     }

@@ -23,26 +23,36 @@
 #include <string.h>
 #include "golombset.h"
 
+#define FIXED_BITS_LENGTH 5
+
 int main(int argc, char **argv)
 {
     const unsigned keys[] = {151, 192,  208,  269,  461,  512,  526,  591,  662,  806,  831,  866,  890,
                        997, 1005, 1017, 1134, 1207, 1231, 1327, 1378, 1393, 1418, 1525, 1627, 1630};
     const size_t num_keys = sizeof(keys) / sizeof(keys[0]);
     unsigned char buf[1024];
-    size_t i, bufsize = sizeof(buf);
+    size_t i;
 
-    if (golombset_encode(keys, num_keys, buf, &bufsize) != 0) {
+    golombset_encoder_t enc = {};
+    enc.dst = buf;
+    enc.dst_max = buf + sizeof(buf);
+    enc.fixed_bits_length = FIXED_BITS_LENGTH;
+    if (golombset_encode(&enc, keys, num_keys, GOLOMBSET_ENCODE_CALC_FIXED_BITS) != 0) {
         fprintf(stderr, "golombset_encode failed\n");
         return 111;
     }
-    printf("encoded %zu entries into %zu bytes: ", num_keys, bufsize);
-    for (i = 0; i != bufsize; ++i)
+    printf("encoded %zu entries into %zu bytes: ", num_keys, enc.dst - buf);
+    for (i = 0; i != enc.dst - buf; ++i)
         printf("%02x", buf[i]);
     printf("\n");
     
     unsigned decoded_keys[num_keys];
     size_t num_decoded_keys = num_keys;
-    if (golombset_decode(buf, bufsize, decoded_keys, &num_decoded_keys) != 0) {
+    golombset_decoder_t dec = {};
+    dec.src = buf;
+    dec.src_max = enc.dst;
+    dec.fixed_bits_length = FIXED_BITS_LENGTH;
+    if (golombset_decode(&dec, decoded_keys, &num_decoded_keys, 0) != 0) {
         fprintf(stderr, "golombset_decode failed\n");
         return 111;
     }
