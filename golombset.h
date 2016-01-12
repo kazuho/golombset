@@ -22,9 +22,14 @@
 #ifndef GOLOMBSET_H
 #define GOLOMBSET_H
 
+#include <assert.h>
 #include <inttypes.h>
+#include <stddef.h>
 
-#define GOLOMBSET_ENCODE_CALC_FIXED_BITS 1
+#define GOLOMBSET_ENCODE_FIXED_BITS 0x1
+#define GOLOMBSET_ENCODE_CALC_FIXED_BITS 0x2
+
+#define GOLOMBSET_DECODE_FIXED_BITS 0x1
 
 typedef struct st_golombset_encoder_t {
     unsigned char *dst;
@@ -143,11 +148,14 @@ static inline int golombset_encode(golombset_encoder_t *ctx, const uint64_t *key
     size_t i;
     uint64_t next_min = 0;
 
-    if ((flags & GOLOMBSET_ENCODE_CALC_FIXED_BITS) != 0)
+    if ((flags & GOLOMBSET_ENCODE_CALC_FIXED_BITS) != 0) {
+        assert((flags & GOLOMBSET_ENCODE_FIXED_BITS) != 0);
         ctx->fixed_bits = golombset_calc_fixed_bits(ctx, keys[num_keys - 1], num_keys);
+    }
 
-    if (golombset_encode_bits(ctx, ctx->fixed_bits, ctx->fixed_bits_length) != 0)
+    if ((flags & GOLOMBSET_ENCODE_FIXED_BITS) != 0 && golombset_encode_bits(ctx, ctx->fixed_bits, ctx->fixed_bits_length) != 0)
         return -1;
+
     for (i = 0; i != num_keys; ++i) {
         if (golombset_encode_value(ctx, keys[i] - next_min) != 0)
             return -1;
@@ -161,11 +169,14 @@ static inline int golombset_encode(golombset_encoder_t *ctx, const uint64_t *key
 static inline int golombset_decode(golombset_decoder_t *ctx, uint64_t *keys, size_t *num_keys, int flags)
 {
     size_t index = 0;
-    uint64_t next_min = 0, tmp;
+    uint64_t next_min = 0;
 
-    if (golombset_decode_bits(ctx, &tmp, ctx->fixed_bits_length) != 0)
-        return -1;
-    ctx->fixed_bits = tmp;
+    if ((flags & GOLOMBSET_DECODE_FIXED_BITS) != 0) {
+        uint64_t tmp;
+        if (golombset_decode_bits(ctx, &tmp, ctx->fixed_bits_length) != 0)
+            return -1;
+        ctx->fixed_bits = tmp;
+    }
 
     while (1) {
         uint64_t value;
