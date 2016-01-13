@@ -152,6 +152,8 @@ static inline int golombset_encode(golombset_encoder_t *ctx, const uint64_t *key
         return -1;
 
     for (i = 0; i != num_keys; ++i) {
+        if (keys[i] < next_min)
+            continue;
         if (golombset_encode_value(ctx, keys[i] - next_min) != 0)
             return -1;
         next_min = keys[i] + 1;
