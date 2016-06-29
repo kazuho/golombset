@@ -41,12 +41,12 @@ static int golombset_encode_bit(struct st_golombset_encode_t *ctx, int bit)
     if (ctx->dst_shift == 0) {
         if (++ctx->dst == ctx->dst_max)
             return -1;
-        *ctx->dst = 0xff;
+        *ctx->dst = 0;
         ctx->dst_shift = 8;
     }
     --ctx->dst_shift;
-    if (!bit)
-        *ctx->dst &= ~(1 << ctx->dst_shift);
+    if (bit)
+        *ctx->dst |= 1 << ctx->dst_shift;
     return 0;
 }
 
@@ -65,9 +65,9 @@ static int golombset_encode_value(struct st_golombset_encode_t *ctx, unsigned fi
     /* emit the unary bits */
     uint64_t unary_bits = value >> fixed_bits;
     for (; unary_bits != 0; --unary_bits)
-        if (golombset_encode_bit(ctx, 1) != 0)
+        if (golombset_encode_bit(ctx, 0) != 0)
             return -1;
-    if (golombset_encode_bit(ctx, 0) != 0)
+    if (golombset_encode_bit(ctx, 1) != 0)
         return -1;
     /* emit the rest */
     unsigned shift = fixed_bits;
@@ -88,7 +88,7 @@ static int golombset_decode_value(struct st_golombset_decode_t *ctx, unsigned fi
     while (1) {
         if ((bit = golombset_decode_bit(ctx)) == -1)
             return -1;
-        if (bit == 0)
+        if (bit)
             break;
         *value += 1 << fixed_bits;
     }
@@ -105,19 +105,16 @@ static int golombset_decode_value(struct st_golombset_decode_t *ctx, unsigned fi
 
 static int golombset_encode(unsigned fixed_bits, uint64_t *keys, size_t num_keys, void *buf, size_t *bufsize)
 {
-    struct st_golombset_encode_t ctx = {buf, buf + *bufsize, 8};
+    struct st_golombset_encode_t ctx = {buf - 1, buf + *bufsize};
     size_t i;
     uint64_t next_min = 0;
 
-    *(unsigned char *)buf = 0xff;
     for (i = 0; i != num_keys; ++i) {
         if (golombset_encode_value(&ctx, fixed_bits, keys[i] - next_min) != 0)
             return -1;
         next_min = keys[i] + 1;
     }
 
-    if (ctx.dst_shift == 8)
-        --ctx.dst;
     *bufsize = ctx.dst + 1 - (unsigned char *)buf;
 
     return 0;
