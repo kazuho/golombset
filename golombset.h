@@ -50,6 +50,18 @@ static int golombset_encode_bit(struct st_golombset_encode_t *ctx, int bit)
     return 0;
 }
 
+static int golombset_encode_bits(struct st_golombset_encode_t *ctx, unsigned bits, uint64_t value)
+{
+    if (bits != 0) {
+        do {
+            --bits;
+            if (golombset_encode_bit(ctx, (value >> bits) & 1) != 0)
+                return -1;
+        } while (bits != 0);
+    }
+    return 0;
+}
+
 static int golombset_decode_bit(struct st_golombset_decode_t *ctx)
 {
     if (ctx->src_shift == 0) {
@@ -60,45 +72,50 @@ static int golombset_decode_bit(struct st_golombset_decode_t *ctx)
     return (*ctx->src >> --ctx->src_shift) & 1;
 }
 
+static int golombset_decode_bits(struct st_golombset_decode_t *ctx, unsigned bits, uint64_t *value)
+{
+    int bit;
+
+    *value = 0;
+    for (; bits != 0; --bits) {
+        if ((bit = golombset_decode_bit(ctx)) == -1)
+            return -1;
+        *value = (*value * 2) + bit;
+    }
+
+    return 0;
+}
+
 static int golombset_encode_value(struct st_golombset_encode_t *ctx, unsigned fixed_bits, uint64_t value)
 {
-    /* emit the unary bits */
+    /* emit quontient */
     uint64_t unary_bits = value >> fixed_bits;
     for (; unary_bits != 0; --unary_bits)
         if (golombset_encode_bit(ctx, 0) != 0)
             return -1;
     if (golombset_encode_bit(ctx, 1) != 0)
         return -1;
-    /* emit the rest */
-    unsigned shift = fixed_bits;
-    do {
-        if (golombset_encode_bit(ctx, (value >> --shift) & 1) != 0)
-            return -1;
-    } while (shift != 0);
-
-    return 0;
+    /* emit remainder */
+    return golombset_encode_bits(ctx, fixed_bits, value);
 }
 
 static int golombset_decode_value(struct st_golombset_decode_t *ctx, unsigned fixed_bits, uint64_t *value)
 {
+    uint64_t q;
     int bit;
-    *value = 0;
 
-    /* decode the unary bits */
-    while (1) {
+    /* decode quontient */
+    for (q = 0; ; ++q) {
         if ((bit = golombset_decode_bit(ctx)) == -1)
             return -1;
         if (bit)
             break;
-        *value += 1 << fixed_bits;
     }
-    /* decode the rest */
-    unsigned shift = fixed_bits;
-    do {
-        if ((bit = golombset_decode_bit(ctx)) == -1)
-            return -1;
-        *value |= bit << --shift;
-    } while (shift != 0);
+    /* decode remainder */
+    if (golombset_decode_bits(ctx, fixed_bits, value) == -1)
+        return -1;
+    /* merge q and r */
+    *value += q << fixed_bits;
 
     return 0;
 }
