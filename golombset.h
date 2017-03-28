@@ -156,7 +156,7 @@ static inline int golombset_encode(golombset_encoder_t *ctx, const uint64_t *key
             continue;
         if (golombset_encode_value(ctx, keys[i] - next_min) != 0)
             return -1;
-        next_min = keys[i] + 1;
+        next_min = keys[i];
     }
 
     ++ctx->dst;
@@ -185,7 +185,7 @@ static inline int golombset_decode(golombset_decoder_t *ctx, uint64_t *keys, siz
         }
         value += next_min;
         keys[index++] = value;
-        next_min = value + 1;
+        next_min = value;
     }
     *num_keys = index;
     return 0;
